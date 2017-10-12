@@ -3,16 +3,31 @@ body {
 	color:#444;
 	margin: 0px;
 }
-
 .header {
 	position: fixed;
 	height: 50px;
 	width: 100%;
     background: rgba(10, 190, 170, 1);
 }
-
 .main_content{
 	background: rgba(100, 100, 100, 0.005);
 	position: absolute;
 	margin-top: 50px;
+}
+.input_fields{
+	position: absolute;
+	height: 50px;
+	width:50%;
+}
+.link{
+	position: absolute;
+	margin-left: 50%;
+	width: 25%;
+	height: 50px;
+}
+.mail{
+	position: absolute;
+	margin-left: 75%;
+	width: 25%;
+	height: 50px;
 }
