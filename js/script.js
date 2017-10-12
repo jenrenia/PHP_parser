@@ -19,7 +19,7 @@ function getDownload(){
 	    url: 'handler.php',
 	    method: 'POST',
 	    success: function(msg) {
-	        document.getElementById('main_content').innerHTML = msg;
+	        document.getElementById('link').innerHTML = '<a href = "' + msg + '">Download</a>';
 	    }
 	});
 }

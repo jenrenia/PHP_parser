@@ -51,13 +51,14 @@
 		}
 		public function getDownload($key, $buffer){	
 			if(isset($key)){
-				$fp = fopen('download_temp/' . $_SERVER['REQUEST_TIME'] . '.csv', 'w');
-				print_r($buffer);
+				$dir = 'download_temp/' . $_SERVER['REQUEST_TIME'] . '.csv';
+				$fp = fopen($dir, 'w');
 				foreach ($buffer as $fields) {
 				    fputcsv($fp, $fields);
 				}
 				fclose($fp);
 			}
+			return $dir;
 		}
 
 		public function writer($string){
