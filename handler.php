@@ -1,7 +1,7 @@
 
 <?php
 	class Handler{
-		public function getNews($number){
+		public function get_news($number){
 			$_SESSION = array(array(array()));
 			include 'libraries/simple_html_dom.php';
 			$html = file_get_html('http://www.pravda.com.ua/rus/news/');
@@ -121,7 +121,7 @@
 			}	 
 			$sql = "SELECT * FROM news GROUP BY parsing_time";
 			$result = $conn->query($sql);
-			$output_string = "<select>";
+			$output_string = "<select id = 'select' onChange = 'select_handler()' >";
 			if ($result->num_rows > 0){
 			    // output data of each row
 			    while($row = $result->fetch_assoc()) {
@@ -134,6 +134,24 @@
 			$conn->close();
 			$output_string = $output_string . '</select>';
 			return $output_string;
+		}	
+
+		public function show_saved($date){
+			include 'configs/config.php';
+			$conn = new mysqli($servername, $username, $password, $dbname);
+			if($conn->connect_error){
+			    die("Connection failed: " . $conn->connect_error);
+			}	 
+			$sql = "SELECT * FROM news WHERE parsing_time = '{$date}' ";
+			$result = $conn->query($sql);
+			$output_string = "<table><tr><td>Номер</td><td>Время и дата парсинга</td>" . 
+				"<td>Время новости</td><td>Заголовок</td><td>Текст новости</td><td>Метки</td></tr>";
+			while($row = $result->fetch_assoc()) {
+			$output_string = $output_string . '<tr><td>'. $row['number'] . '</td><td>' . $row['parsing_time'] .
+		    	'</td><td>' . $row['news_time'] . '</td><td><a href="'. $row['href'] .'">' .
+		    	$row['title'].'</a></td><td>' . $row['body'] .'</td></tr>';
+		    }
+		    return $output_string . "</table>";
 		}		
 	}
 
@@ -142,7 +160,7 @@
 	session_start();
 
 	if(isset($_POST['number'])){
-		$handler->writer($handler->getNews($_POST['number']));
+		$handler->writer($handler->get_news($_POST['number']));
 	}
 
 	$buffer = $_SESSION;
@@ -160,5 +178,9 @@
 
 	if (isset($_POST['saved'])) {
 		$handler->writer($handler->get_saved());
+	}
+
+	if (isset($_POST['show'])) {
+		$handler->writer($handler->show_saved($_POST['show']));
 	}
 ?>

@@ -53,6 +53,19 @@ function get_saved(){
 	    method: 'POST',
 	    success: function(msg) {
 	    	file_link = msg;
+	        document.getElementById('link').innerHTML = msg;
+	    }
+	});
+}
+function select_handler(){
+	var e = document.getElementById("select");
+	var strUser = e.options[e.selectedIndex].value;
+	$.ajax({
+	    data: 'show=' + strUser,
+	    url: 'handler.php',
+	    method: 'POST',
+	    success: function(msg) {
+	    	file_link = msg;
 	        document.getElementById('main_content').innerHTML = msg;
 	    }
 	});
