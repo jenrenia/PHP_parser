@@ -6,16 +6,26 @@
 			include 'libraries/simple_html_dom.php';
 			$html = file_get_html('http://www.pravda.com.ua/rus/news/');
 			$html = $html->find('.block_news_all');
-			$html = str_get_html($html[0]);
-			$parsed_string = "<table><tr><td>Номер</td><td>Время и дата парсинга</td>" . 
-			"<td>Время новости</td><td>Заголовок</td><td>Текст новости</td><td>Метки</td></tr>";
+			$html = str_get_html($html[0]);         
+			$parsed_string = "
+			<table class='table table-bordered'>
+			<thead>
+		      <tr>
+		        <th>Номер</th>
+		        <th>Время и дата парсинга</th>
+		        <th>Время новости</th>
+		        <th>Заголовок</th>
+		        <th>Текст новости</th>
+		        <th>Метки</th>
+		      </tr>
+		    </thead><tbody>";
 			if($html->innertext!=''){
 				if($number != 0){
 				  	foreach($html->find('.article') as $key => $a){
 				  		if($key + 1 <= $number){
 				  			//write to session for possible further saving to file
 				  			$_SESSION['key' . $key]['number'] = $key;
-				  			$_SESSION['key' . $key]['parsing_time'] = date('l jS \of F Y h:i:s A');
+				  			$_SESSION['key' . $key]['parsing_time'] = date('jS F Y h:i:s A');
 				  			$_SESSION['key' . $key]['news_time'] = strval($html->find('.article__time')[$key]);
 				  			$_SESSION['key' . $key]['title'] = strval($a->plaintext);
 				  			$_SESSION['key' . $key]['href'] = strval($a->find('a')[0]->href);
@@ -24,7 +34,7 @@
 				  			//preparing string out for main div
 					    	$parsed_string = $parsed_string . '<tr><td>'. $key . '</td><td>' . date('l jS \of F Y h:i:s A') .
 					    	'</td><td>' . $html->find('.article__time')[$key] . '</td><td><a href="'. $a->find('a')[0]->href .'">' .
-					    	$a->plaintext.'</a></td><td>' . $html->find('.article__subtitle')[$key] .'</td></tr>';
+					    	$a->plaintext.'</a></td><td>' . $html->find('.article__subtitle')[$key] .'</td><td></td></tr>';
 				    	}
 				  	}
 				}
@@ -32,7 +42,7 @@
 			  		foreach($html->find('.article') as $key => $a){
 			  				//write to session for possible further saving to file
 				  			$_SESSION['key' . $key]['number'] = $key;
-				  			$_SESSION['key' . $key]['parsing_time'] = date('l jS \of F Y h:i:s A');
+				  			$_SESSION['key' . $key]['parsing_time'] = date('jS F Y h:i:s A');
 				  			$_SESSION['key' . $key]['news_time'] = strval($html->find('.article__time')[$key]);
 				  			$_SESSION['key' . $key]['title'] = strval($a->plaintext);
 				  			$_SESSION['key' . $key]['href'] = strval($a->find('a')[0]->href);
@@ -45,7 +55,7 @@
 				  	}
 			  	}  	
 			}
-			return $parsed_string . "</table>";
+			return $parsed_string . "</tbody></table>";
 		}
 		
 		public function get_download($buffer){	
@@ -72,10 +82,10 @@
 			if($conn->connect_error){
 			    die("Connection failed: " . $conn->connect_error);
 			}	 
-			$sql = "SELECT id FROM news WHERE id = 1 ";
+			$sql = "SELECT 1 FROM news LIMIT 1";
 			$result = $conn->query($sql);
-			if($result->num_rows > 0){
-				foreach ($_SESSION as $key => $value) {
+			if($result == TRUE){
+				foreach ($_SESSION as $key => $value){
 					$news_time = strval($value['news_time']);
 					$parsing_time = strval($value['parsing_time']);
 					$title = strval($value['title']);
@@ -100,8 +110,9 @@
 					  news_time varchar(30) NOT NULL,
 					  title varchar(255) NOT NULL,
 					  body varchar(255) NOT NULL,
-					  singns varchar(255) NOT NULL
-					) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+					  singns varchar(255) NOT NULL,
+					  href varchar(255) NOT NULL
+					) ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 				if($conn->query($sql) === TRUE){
 				    echo "It's a first query.Table created.";
@@ -109,6 +120,42 @@
 				    echo "Error creating table: " . $conn->error;
 				}
 
+				$sql = "ALTER TABLE `news` ADD PRIMARY KEY (`id`)";
+
+				if($conn->query($sql) === TRUE){
+				    echo "It's a first query.Table created.";
+				}else{
+				    echo "Error creating table: " . $conn->error;
+				}
+
+				$sql = "ALTER TABLE `news` MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1";
+
+				if($conn->query($sql) === TRUE){
+				    echo "It's a first query.Table created.";
+				}else{
+				    echo "Error creating table: " . $conn->error;
+				}
+
+				$sql = "SELECT 1 FROM news LIMIT 1";
+				$result = $conn->query($sql);
+				if($result == TRUE){
+					foreach ($_SESSION as $key => $value){
+						$news_time = strval($value['news_time']);
+						$parsing_time = strval($value['parsing_time']);
+						$title = strval($value['title']);
+						$body = strval($value['body']);
+						$href = strval($value['href']);
+						$sql = "INSERT INTO news (number, parsing_time, news_time, title, href, body, singns)
+						VALUES ({$value['number']}, '{$parsing_time}', '{$news_time}', '{$title}', '{$href}', '{$body}', '1')";
+						$conn->query($sql);
+						/*if($conn->query($sql) === TRUE){
+						    echo "record created successfully";
+						}
+						else{
+						    echo "Error: " . $sql . "<br>" . $conn->error;
+						}*/
+					}
+				}
 				$conn->close();
 			}
 		}
@@ -119,7 +166,7 @@
 			if($conn->connect_error){
 			    die("Connection failed: " . $conn->connect_error);
 			}	 
-			$sql = "SELECT * FROM news GROUP BY parsing_time";
+			$sql = "SELECT parsing_time FROM news GROUP BY parsing_time";
 			$result = $conn->query($sql);
 			$output_string = "<select id = 'select' onChange = 'select_handler()' >";
 			if ($result->num_rows > 0){
@@ -142,7 +189,7 @@
 			if($conn->connect_error){
 			    die("Connection failed: " . $conn->connect_error);
 			}	 
-			$sql = "SELECT * FROM news WHERE parsing_time = '{$date}' ";
+			$sql = "SELECT * FROM news WHERE parsing_time LIKE '$date'";
 			$result = $conn->query($sql);
 			$output_string = "<table><tr><td>Номер</td><td>Время и дата парсинга</td>" . 
 				"<td>Время новости</td><td>Заголовок</td><td>Текст новости</td><td>Метки</td></tr>";

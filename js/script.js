@@ -44,6 +44,7 @@ function save_to_db(){
 	        document.getElementById('link').innerHTML = msg;
 	    }
 	});
+	get_saved();
 }
 
 function get_saved(){

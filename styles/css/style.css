@@ -7,7 +7,7 @@ body {
 	position: fixed;
 	height: 50px;
 	width: 100%;
-    background: rgba(10, 190, 170, 1);
+    background: rgb(10, 190, 170);
 }
 .main_content{
 	background: rgba(100, 100, 100, 0.005);
