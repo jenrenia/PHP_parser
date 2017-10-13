@@ -7,7 +7,23 @@
 			$html = file_get_html('http://www.pravda.com.ua/rus/news/');
 			$html = $html->find('.block_news_all');
 			$html = str_get_html($html[0]);         
-			$parsed_string = "
+			if($html->innertext!=''){
+				foreach($html->find('.article') as $key => $a){
+					$array[$key]['number'] = $key;
+					$array[$key]['parsing_time'] = date('jS F Y h:i:s A');
+					$array[$key]['news_time'] = $html->find('.article__time')[$key];
+					$array[$key]['title'] = $a->plaintext;
+					$array[$key]['body'] = $html->find('.article__subtitle')[$key];
+					$array[$key]['href'] = $a->find('a')[0]->href;
+					$array[$key]['singns'] = $a;
+				}
+			  	$table_html = $this->table_former($array, $number);
+			}
+			return $table_html;
+		}
+
+		public function table_former($array, $number = 0){
+			$outgoing_string = "
 			<table class='table table-bordered'>
 			<thead>
 		      <tr>
@@ -19,45 +35,44 @@
 		        <th>Метки</th>
 		      </tr>
 		    </thead><tbody>";
-			if($html->innertext!=''){
-				if($number != 0){
-				  	foreach($html->find('.article') as $key => $a){
-				  		if($key + 1 <= $number){
-				  			//write to session for possible further saving to file
-				  			$_SESSION['key' . $key]['number'] = $key;
-				  			$_SESSION['key' . $key]['parsing_time'] = date('jS F Y h:i:s A');
-				  			$_SESSION['key' . $key]['news_time'] = strval($html->find('.article__time')[$key]);
-				  			$_SESSION['key' . $key]['title'] = strval($a->plaintext);
-				  			$_SESSION['key' . $key]['href'] = strval($a->find('a')[0]->href);
-				  			$_SESSION['key' . $key]['body'] = strval($html->find('.article__subtitle')[$key]);
-				  			$_SESSION['key' . $key]['singns'] = strval($html->find('.article__subtitle')[$key]);
-				  			//preparing string out for main div
-					    	$parsed_string = $parsed_string . '<tr><td>'. $key . '</td><td>' . date('l jS \of F Y h:i:s A') .
-					    	'</td><td>' . $html->find('.article__time')[$key] . '</td><td><a href="'. $a->find('a')[0]->href .'">' .
-					    	$a->plaintext.'</a></td><td>' . $html->find('.article__subtitle')[$key] .'</td><td></td></tr>';
-				    	}
-				  	}
-				}
-			  	else{
-			  		foreach($html->find('.article') as $key => $a){
-			  				//write to session for possible further saving to file
-				  			$_SESSION['key' . $key]['number'] = $key;
-				  			$_SESSION['key' . $key]['parsing_time'] = date('jS F Y h:i:s A');
-				  			$_SESSION['key' . $key]['news_time'] = strval($html->find('.article__time')[$key]);
-				  			$_SESSION['key' . $key]['title'] = strval($a->plaintext);
-				  			$_SESSION['key' . $key]['href'] = strval($a->find('a')[0]->href);
-				  			$_SESSION['key' . $key]['body'] = strval($html->find('.article__subtitle')[$key]);
-				  			$_SESSION['key' . $key]['singns'] = strval($html->find('.article__subtitle')[$key]);
-				  			//preparing string out for main div
-					    	$parsed_string = $parsed_string . '<tr><td>'. $key . '</td><td>' . date('l jS \of F Y h:i:s A') 
-					    	.'</td><td>' . $html->find('.article__time')[$key] . '</td><td><a href="'. $a->find('a')[0]->href .'">'
-					    	.$a->plaintext.'</a></td><td>' . $html->find('.article__subtitle')[$key] .'</td></tr>';
-				  	}
-			  	}  	
+		    if($number != 0){
+				foreach($array as $key => $a){
+			  		if($key + 1 <= $number){
+			  			$num = $key + 1;
+			  			//preparing string out for main div
+				    	$outgoing_string = $outgoing_string . '<tr><td>'. $a['number'] . '</td><td>' . $a['parsing_time'] .
+				    	'</td><td>' . $a['news_time'] . '</td><td><a href="'. $a['href'] .'">' .
+				    	$a['title'] .'</a></td><td>' . $a['body'] .'</td><td></td></tr>';
+				    	$this->write_session($a, $key);
+			    	}
+			    }
 			}
-			return $parsed_string . "</tbody></table>";
+		    else{
+		    	//print_r($array);
+		    	foreach($array as $key => $a){
+					
+		  			//preparing string out for main div
+			    	$outgoing_string = $outgoing_string . '<tr><td>'. $a['number'] . '</td><td>' . $a['parsing_time'] .
+			    	'</td><td>' . $a['news_time'] . '</td><td><a href="'. $a['href'] .'">' .
+			    	$a['title'] .'</a></td><td>' . $a['body'] .'</td><td></td></tr>';
+			    	$this->write_session($a, $key);
+			    }
+		  	}
+		  	return $outgoing_string . "</tbody></table>";;
 		}
-		
+
+		public function write_session($a, $key){	
+			//write to session for possible further saving to file
+  			$_SESSION['key' . $key]['number'] = $a['number'];
+  			$_SESSION['key' . $key]['parsing_time'] = $a['parsing_time'];
+  			$_SESSION['key' . $key]['news_time'] = strval($a['parsing_time']);
+  			$_SESSION['key' . $key]['title'] = strval($a['title']);
+  			$_SESSION['key' . $key]['href'] = strval($a['href']);
+  			$_SESSION['key' . $key]['body'] = strval($a['body']);
+  			$_SESSION['key' . $key]['singns'] = '';
+			return ;
+		}
+
 		public function get_download($buffer){	
 			$dir = 'download_temp/' . microtime(true) . '.csv';
 			$fp = fopen($dir, 'w');
@@ -94,48 +109,10 @@
 					$sql = "INSERT INTO news (number, parsing_time, news_time, title, href, body, singns)
 					VALUES ({$value['number']}, '{$parsing_time}', '{$news_time}', '{$title}', '{$href}', '{$body}', '1')";
 					$conn->query($sql);
-					/*if($conn->query($sql) === TRUE){
-					    echo "record created successfully";
-					}
-					else{
-					    echo "Error: " . $sql . "<br>" . $conn->error;
-					}*/
 				}
 			}
 			else{
-				$sql = "CREATE TABLE news (
-					  id int(10) NOT NULL,
-					  number int(10) NOT NULL,
-					  parsing_time varchar(30) NOT NULL,
-					  news_time varchar(30) NOT NULL,
-					  title varchar(255) NOT NULL,
-					  body varchar(255) NOT NULL,
-					  singns varchar(255) NOT NULL,
-					  href varchar(255) NOT NULL
-					) ENGINE=InnoDB DEFAULT CHARSET=latin1";
-
-				if($conn->query($sql) === TRUE){
-				    echo "It's a first query.Table created.";
-				}else{
-				    echo "Error creating table: " . $conn->error;
-				}
-
-				$sql = "ALTER TABLE `news` ADD PRIMARY KEY (`id`)";
-
-				if($conn->query($sql) === TRUE){
-				    echo "It's a first query.Table created.";
-				}else{
-				    echo "Error creating table: " . $conn->error;
-				}
-
-				$sql = "ALTER TABLE `news` MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1";
-
-				if($conn->query($sql) === TRUE){
-				    echo "It's a first query.Table created.";
-				}else{
-				    echo "Error creating table: " . $conn->error;
-				}
-
+				$this->create_table();
 				$sql = "SELECT 1 FROM news LIMIT 1";
 				$result = $conn->query($sql);
 				if($result == TRUE){
@@ -148,18 +125,46 @@
 						$sql = "INSERT INTO news (number, parsing_time, news_time, title, href, body, singns)
 						VALUES ({$value['number']}, '{$parsing_time}', '{$news_time}', '{$title}', '{$href}', '{$body}', '1')";
 						$conn->query($sql);
-						/*if($conn->query($sql) === TRUE){
-						    echo "record created successfully";
-						}
-						else{
-						    echo "Error: " . $sql . "<br>" . $conn->error;
-						}*/
 					}
 				}
 				$conn->close();
 			}
 		}
+		public function create_table(){
+			$sql = "CREATE TABLE news (
+					  id int(10) NOT NULL,
+					  number int(10) NOT NULL,
+					  parsing_time varchar(30) NOT NULL,
+					  news_time varchar(30) NOT NULL,
+					  title varchar(255) NOT NULL,
+					  body varchar(255) NOT NULL,
+					  singns varchar(255) NOT NULL,
+					  href varchar(255) NOT NULL
+					) ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
+			if($conn->query($sql) === TRUE){
+			    echo "It's a first query.Table created.";
+			}else{
+			    echo "Error creating table: " . $conn->error;
+			}
+
+			$sql = "ALTER TABLE `news` ADD PRIMARY KEY (`id`)";
+
+			if($conn->query($sql) === TRUE){
+			    echo "It's a first query.Table created.";
+			}else{
+			    echo "Error creating table: " . $conn->error;
+			}
+
+			$sql = "ALTER TABLE `news` MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1";
+
+			if($conn->query($sql) === TRUE){
+			    echo "It's a first query.Table created.";
+			}else{
+			    echo "Error creating table: " . $conn->error;
+			}
+			return;
+		}
 		public function get_saved(){
 			include 'configs/config.php';
 			$conn = new mysqli($servername, $username, $password, $dbname);
@@ -191,15 +196,12 @@
 			}	 
 			$sql = "SELECT * FROM news WHERE parsing_time LIKE '$date'";
 			$result = $conn->query($sql);
-			$output_string = "<table><tr><td>Номер</td><td>Время и дата парсинга</td>" . 
-				"<td>Время новости</td><td>Заголовок</td><td>Текст новости</td><td>Метки</td></tr>";
-			while($row = $result->fetch_assoc()) {
-			$output_string = $output_string . '<tr><td>'. $row['number'] . '</td><td>' . $row['parsing_time'] .
-		    	'</td><td>' . $row['news_time'] . '</td><td><a href="'. $row['href'] .'">' .
-		    	$row['title'].'</a></td><td>' . $row['body'] .'</td></tr>';
-		    }
-		    return $output_string . "</table>";
-		}		
+			while( $row = $result->fetch_assoc()){
+			    $array[] = $row; // Inside while loop
+			}
+			$table_html = $this->table_former($array, 0);
+			return $table_html;
+		}			
 	}
 
 	$handler = new Handler;
