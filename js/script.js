@@ -39,7 +39,7 @@ function mail_handler(){
 	    method: 'POST',
 	    success: function(msg) {
 	    	file_link = msg;
-	        document.getElementById('link').innerHTML = 'Sent';
+	        document.getElementById('link').innerHTML = msg;
 	    }
 	});
 }
