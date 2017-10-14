@@ -1,5 +1,7 @@
 
 <?php
+	error_reporting(0);
+
 	class Handler{
 		public function get_news($number){
 			$_SESSION = array(array(array()));
@@ -9,7 +11,8 @@
 			$html = str_get_html($html[0]);         
 			if($html->innertext!=''){
 				foreach($html->find('.article') as $key => $a){
-					$array[$key]['number'] = $key;
+					$keyinc = $key + 1;
+					$array[$key]['number'] = $keyinc;
 					$array[$key]['parsing_time'] = date('jS F Y h:i:s A');
 					$array[$key]['news_time'] = $html->find('.article__time')[$key]->innertext;
 					$array[$key]['title'] = $a->find('a')[0]->innertext;
