@@ -104,15 +104,9 @@
 		}
 
 		public function sendMail($file_link, $reciever){
-			include 'libraries/swiftmailer/swift_required.php';
-			$message = Swift_Message::newInstance()
-			    ->setSubject('Your subject')
-			    ->setFrom(array('webmaster@mysite.com' => 'Web Master'))
-			    ->setTo(array('receiver@example.com'))
-			    ->setBody('Here is the message itself')
-			    ->attach(Swift_Attachment::fromPath('myPDF.pdf'));
-			    $mailer->send($message);
-					return $file_link . $reciever;
+			$url = 'domain.xx' . $file_link;
+			mail($reciever, 'Your saved news from PHP parser.', $url);
+			return 1;
 		}
 
 		public function save_to_db(){
@@ -155,6 +149,11 @@
 			}
 		}
 		public function create_table(){
+			include 'configs/config.php';
+			$conn = new mysqli($servername, $username, $password, $dbname);
+			if($conn->connect_error){
+			    die("Connection failed: " . $conn->connect_error);
+			}
 			$sql = "CREATE TABLE news (
 					  id int(10) NOT NULL,
 					  number int(10) NOT NULL,
@@ -197,7 +196,7 @@
 			}	 
 			$sql = "SELECT parsing_time FROM news GROUP BY parsing_time";
 			$result = $conn->query($sql);
-			$output_string = "<select id = 'select' onChange = 'select_handler()' >";
+			$output_string = "<select id = 'select' onChange = 'select_handler()' ><option>Choose date:</option>";
 			if ($result->num_rows > 0){
 			    // output data of each row
 			    while($row = $result->fetch_assoc()) {
@@ -220,10 +219,15 @@
 			}	 
 			$sql = "SELECT * FROM news WHERE parsing_time LIKE '$date'";
 			$result = $conn->query($sql);
-			while( $row = $result->fetch_assoc()){
+			while($row = $result->fetch_assoc()){
 			    $array[] = $row; // Inside while loop
 			}
-			$table_html = $this->table_former($array, 0);
+			if (isset($array)) {
+				$table_html = $this->table_former($array, 0);
+			}
+			else{
+				$table_html = "No data";
+			}
 			return $table_html;
 		}			
 	}
