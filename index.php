@@ -20,9 +20,6 @@
 			<div class = "link" id = "link">
 
 			</div>
-			<div class = "mail" id = "mail">
-
-			</div>
 		</div>
 	</head>
 

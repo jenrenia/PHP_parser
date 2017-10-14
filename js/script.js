@@ -1,12 +1,17 @@
 function start_handler(){
-	$.ajax({
-	    data: 'number=' + document.getElementById('input_field').value,
-	    url: 'handler.php',
-	    method: 'POST',
-	    success: function(msg) {
-	        document.getElementById('main_content').innerHTML = msg;
-	    }
-	});
+	if (Number.isInteger(parseInt(document.getElementById('input_field').value)) || document.getElementById('input_field').value == 0){
+	    $.ajax({
+		    data: 'number=' + document.getElementById('input_field').value,
+		    url: 'handler.php',
+		    method: 'POST',
+		    success: function(msg) {
+		        document.getElementById('main_content').innerHTML = msg;
+		    }
+		});
+	}
+	else{
+	    document.getElementById('input_field').value = "Enter integer only";
+	}
 }
 
 function clear_handler(){
@@ -22,16 +27,21 @@ function get_download(){
 	    method: 'POST',
 	    success: function(msg) {
 	    	file_link = msg;
-	        document.getElementById('link').innerHTML = '<a href = "' + msg + '">Download</a>';
-	        document.getElementById('mail').innerHTML = '<input id = "mail_form"></input><button onClick = "mail_handler()">Mail</button>';
+	        document.getElementById('link').innerHTML = '<a href = "' + msg + '">Download &nbsp </a><input id = "mail_form"></input><button onClick = "mail_handler()">Mail</button>';
 	    }
 	});
 }
 
 function mail_handler(){
-	$.post( "handler.php", { file_link: "John", reciever: "2pm" },function(data){//cheack if sended
-        document.getElementById('mail').innerHTML = "Sent";
-    });
+	$.ajax({
+	    data: {file_link: file_link, reciever: document.getElementById('mail_form').value},
+	    url: 'handler.php',
+	    method: 'POST',
+	    success: function(msg) {
+	    	file_link = msg;
+	        document.getElementById('link').innerHTML = msg;
+	    }
+	});
 }
 
 function save_to_db(){

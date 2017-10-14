@@ -4,10 +4,10 @@ body {
 	margin: 0px;
 }
 .header {
-	position: fixed;
 	height: 50px;
 	width: 100%;
-    background: rgb(10, 190, 170);
+    background: rgba(200, 200, 200, 0.7);
+    padding: 12px;
 }
 .main_content{
 	background: rgba(100, 100, 100, 0.005);
@@ -22,12 +22,6 @@ body {
 .link{
 	position: absolute;
 	margin-left: 50%;
-	width: 25%;
-	height: 50px;
-}
-.mail{
-	position: absolute;
-	margin-left: 75%;
-	width: 25%;
+	width: 50%;
 	height: 50px;
 }

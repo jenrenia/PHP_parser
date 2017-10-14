@@ -11,11 +11,15 @@
 				foreach($html->find('.article') as $key => $a){
 					$array[$key]['number'] = $key;
 					$array[$key]['parsing_time'] = date('jS F Y h:i:s A');
-					$array[$key]['news_time'] = $html->find('.article__time')[$key];
-					$array[$key]['title'] = $a->plaintext;
-					$array[$key]['body'] = $html->find('.article__subtitle')[$key];
+					$array[$key]['news_time'] = $html->find('.article__time')[$key]->innertext;
+					$array[$key]['title'] = $a->find('a')[0]->innertext;
+					//$temp = str_get_html($a->outertext);
+					//$temp1 = $temp->find('div[class=article article_bold]');
+					//$array[$key]['bold'] = $temp1;
+					$array[$key]['body'] = $html->find('.article__subtitle')[$key]->innertext;
 					$array[$key]['href'] = $a->find('a')[0]->href;
 					$array[$key]['singns'] = $a;
+					//print_r($array[$key]['bold']);
 				}
 			  	$table_html = $this->table_former($array, $number);
 			}
@@ -23,7 +27,7 @@
 		}
 
 		public function table_former($array, $number = 0){
-			$outgoing_string = "
+			$output_string = "
 			<table class='table table-bordered'>
 			<thead>
 		      <tr>
@@ -40,9 +44,15 @@
 			  		if($key + 1 <= $number){
 			  			$num = $key + 1;
 			  			//preparing string out for main div
-				    	$outgoing_string = $outgoing_string . '<tr><td>'. $a['number'] . '</td><td>' . $a['parsing_time'] .
-				    	'</td><td>' . $a['news_time'] . '</td><td><a href="'. $a['href'] .'">' .
-				    	$a['title'] .'</a></td><td>' . $a['body'] .'</td><td></td></tr>';
+				    	$output_string = $output_string . '<tr><td>'. $a['number'] . '</td><td>' . $a['parsing_time'] .
+				    	'</td><td>' . $a['news_time'] . '</td><td><a target="_blank" href="http://www.pravda.com.ua'. $a['href'] .'">' ;
+				    	if (isset($a['bold'])) {
+				    		$output_string = $output_string . '<b>' . $a['title'] . '</b>';
+				    	}
+				    	else{
+				    		$output_string = $output_string . $a['title'];
+				    	}
+				    	$output_string = $output_string . '</a></td><td>' . $a['body'] .'</td><td>' . '</td></tr>';
 				    	$this->write_session($a, $key);
 			    	}
 			    }
@@ -52,20 +62,26 @@
 		    	foreach($array as $key => $a){
 					
 		  			//preparing string out for main div
-			    	$outgoing_string = $outgoing_string . '<tr><td>'. $a['number'] . '</td><td>' . $a['parsing_time'] .
-			    	'</td><td>' . $a['news_time'] . '</td><td><a href="'. $a['href'] .'">' .
-			    	$a['title'] .'</a></td><td>' . $a['body'] .'</td><td></td></tr>';
-			    	$this->write_session($a, $key);
+			    	$output_string = $output_string . '<tr><td>'. $a['number'] . '</td><td>' . $a['parsing_time'] .
+				    	'</td><td>' . $a['news_time'] . '</td><td><a target="_blank" href="http://www.pravda.com.ua'. $a['href'] .'">' ;
+				    	if (isset($a['bold'])) {
+				    		$output_string = $output_string . '<b>' . $a['title'] . '</b>';
+				    	}
+				    	else{
+				    		$output_string = $output_string . $a['title'];
+				    	}
+				    	$output_string = $output_string . '</a></td><td>' . $a['body'] .'</td><td></td></tr>';
+				    	$this->write_session($a, $key);
 			    }
 		  	}
-		  	return $outgoing_string . "</tbody></table>";;
+		  	return $output_string . "</tbody></table>";;
 		}
 
 		public function write_session($a, $key){	
 			//write to session for possible further saving to file
   			$_SESSION['key' . $key]['number'] = $a['number'];
   			$_SESSION['key' . $key]['parsing_time'] = $a['parsing_time'];
-  			$_SESSION['key' . $key]['news_time'] = strval($a['parsing_time']);
+  			$_SESSION['key' . $key]['news_time'] = strval($a['news_time']);
   			$_SESSION['key' . $key]['title'] = strval($a['title']);
   			$_SESSION['key' . $key]['href'] = strval($a['href']);
   			$_SESSION['key' . $key]['body'] = strval($a['body']);
@@ -88,7 +104,15 @@
 		}
 
 		public function sendMail($file_link, $reciever){
-			return $file_link + $reciever;
+			include 'libraries/swiftmailer/swift_required.php';
+			$message = Swift_Message::newInstance()
+			    ->setSubject('Your subject')
+			    ->setFrom(array('webmaster@mysite.com' => 'Web Master'))
+			    ->setTo(array('receiver@example.com'))
+			    ->setBody('Here is the message itself')
+			    ->attach(Swift_Attachment::fromPath('myPDF.pdf'));
+			    $mailer->send($message);
+					return $file_link . $reciever;
 		}
 
 		public function save_to_db(){
@@ -137,7 +161,7 @@
 					  parsing_time varchar(30) NOT NULL,
 					  news_time varchar(30) NOT NULL,
 					  title varchar(255) NOT NULL,
-					  body varchar(255) NOT NULL,
+					  body longtext NOT NULL,
 					  singns varchar(255) NOT NULL,
 					  href varchar(255) NOT NULL
 					) ENGINE=InnoDB DEFAULT CHARSET=latin1";
